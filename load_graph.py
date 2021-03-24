@@ -1,15 +1,47 @@
 import dgl
 import torch as th
 
+def load_pubmed():
+    from dgl.data import PubmedGraphDataset
+    data = PubmedGraphDataset()
+    g = data[0]
+    g.ndata['features'] = g.ndata['feat']
+    g.ndata['labels'] = g.ndata['label']
+    return g
+
+def load_corafull():
+    from dgl.data import CoraFullDataset
+    data = CoraFullDataset()
+    g = data[0]
+    g.ndata['features'] = g.ndata['feat']
+    g.ndata['labels'] = g.ndata['label']
+    return g
+
+def  load_amazon_computer():
+    from  dgl.data import AmazonCoBuyComputerDataset
+    data = AmazonCoBuyComputerDataset()
+    g = data[0]
+    g.ndata['features'] = g.ndata['feat']
+    g.ndata['labels'] = g.ndata['label']
+    return g
+
+def  load_amazon_photo():
+    from  dgl.data import AmazonCoBuyPhotoDataset
+    data = AmazonCoBuyPhotoDataset()
+    g = data[0]
+    g.ndata['features'] = g.ndata['feat']
+    g.ndata['labels'] = g.ndata['label']
+    return g
+
 def load_reddit():
     from dgl.data import RedditDataset
 
     # load reddit data
-    data = RedditDataset(self_loop=True)
+    data = RedditDataset()
     g = data[0]
     g.ndata['features'] = g.ndata['feat']
     g.ndata['labels'] = g.ndata['label']
-    return g, data.num_labels
+    return g
 
 def load_ogb(name):
     from ogb.nodeproppred import DglNodePropPredDataset
@@ -38,7 +70,7 @@ def load_ogb(name):
     graph.ndata['val_mask'] = val_mask
     graph.ndata['test_mask'] = test_mask
     print('finish constructing', name)
-    return graph, num_labels
+    return graph
 
 def inductive_split(g):
     """Split the graph into training graph, validation graph, and test graph by training
