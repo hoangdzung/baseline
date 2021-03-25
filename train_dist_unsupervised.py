@@ -151,7 +151,7 @@ class NeighborSampler(object):
             blocks.insert(0, block)
 
         input_nodes = blocks[0].srcdata[dgl.NID]
-        blocks[0].srcdata['features'] = load_subtensor(self.g, input_nodes, 'cpu')
+        blocks[0].srcdata['feat'] = load_subtensor(self.g, input_nodes, 'cpu')
         # Pre-generate CSR format that it can be used in training directly
         return pos_graph, neg_graph, blocks
 
@@ -235,7 +235,7 @@ def load_subtensor(g, input_nodes, device):
     """
     Copys features and labels of a set of nodes onto GPU.
     """
-    batch_inputs = g.ndata['features'][input_nodes].to(device)
+    batch_inputs = g.ndata['feat'][input_nodes].to(device)
     return batch_inputs
 
 class CrossEntropyLoss(nn.Module):
@@ -301,6 +301,8 @@ def compute_acc(emb, labels, train_nids, val_nids, test_nids):
 
 def run(args, device, data):
     # Unpack data
+    import time
+    stime = time.time()
     train_eids, train_nids, in_feats, g, global_train_nid, global_valid_nid, global_test_nid, labels = data
     # Create sampler
     sampler = NeighborSampler(g, [int(fanout) for fanout in args.fan_out.split(',')], train_nids,
@@ -402,10 +404,11 @@ def run(args, device, data):
 
     # evaluate the embedding using LogisticRegression
     if args.standalone:
-        pred = generate_emb(model,g, g.ndata['features'], args.batch_size_eval, device)
+        pred = generate_emb(model,g, g.ndata['feat'], args.batch_size_eval, device)
     else:
-        pred = generate_emb(model.module, g, g.ndata['features'], args.batch_size_eval, device)
+        pred = generate_emb(model.module, g, g.ndata['feat'], args.batch_size_eval, device)
     if g.rank() == 0:
+        print("training time: ", time.time()-stime)
         eval_acc, test_acc = compute_acc(pred, labels, global_train_nid, global_valid_nid, global_test_nid)
         print('eval acc {:.4f}; test acc {:.4f}'.format(eval_acc, test_acc))
 
@@ -420,7 +423,7 @@ def run(args, device, data):
         if g.rank() == 0:
             th.save(pred, 'emb.pt')
     else:
-        feat = g.ndata['features']
+        feat = g.ndata['feat']
         th.save(pred, 'emb.pt')
 
 def main(args):
@@ -443,7 +446,7 @@ def main(args):
         device = th.device('cuda:'+str(g.rank() % args.num_gpus))
 
     # Pack data
-    in_feats = g.ndata['features'].shape[1]
+    in_feats = g.ndata['feat'].shape[1]
     global_train_nid = global_train_nid.squeeze()
     global_valid_nid = global_valid_nid.squeeze()
     global_test_nid = global_test_nid.squeeze()
