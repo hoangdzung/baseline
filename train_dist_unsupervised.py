@@ -410,9 +410,15 @@ def run(args, device, data):
         pred = generate_emb(model.module, g, g.ndata['feat'], args.batch_size_eval, device)
     if g.rank() == 0:
         print("training time: ", time.time()-stime)
-        for seed in [100,200,300,400,500]:
-            eval_acc, test_acc = compute_acc(pred, labels, global_train_nid, global_valid_nid, global_test_nid)
-            print('eval acc {:.4f}; test acc {:.4f}'.format(eval_acc, test_acc))
+        pred = pred[np.arange(labels.shape[0])].cpu().numpy()
+        global_train_nid = global_train_nid.cpu().numpy()
+        global_val_nid = global_val_nid.cpu().numpy()
+        global_test_nid = global_test_nid.cpu().numpy()
+        labels = labels.cpu().numpy()
+        np.savez_compressed(args.out_npz, emb=pred, train_ids=global_train_nid, val_ids=global_val_nid, test_ids=global_test_nid,labels=labels)
+        # for seed in [100,200,300,400,500]:
+        #     eval_acc, test_acc = compute_acc(pred, labels, global_train_nid, global_valid_nid, global_test_nid)
+        #     print('eval acc {:.4f}; test acc {:.4f}'.format(eval_acc, test_acc))
 
     # sync for eval and test
     if not args.standalone:
@@ -422,11 +428,11 @@ def run(args, device, data):
         g._client.barrier()
 
         # save features into file
-        if g.rank() == 0:
-            th.save(pred, 'emb.pt')
+        # if g.rank() == 0:
+            # th.save(pred, 'emb.pt')
     else:
         feat = g.ndata['feat']
-        th.save(pred, 'emb.pt')
+        # th.save(pred, 'emb.pt')
 
 def main(args):
     dgl.distributed.initialize(args.ip_config, args.num_servers, num_workers=args.num_workers)
@@ -463,6 +469,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='GCN')
     register_data_args(parser)
     parser.add_argument('--graph_name', type=str, help='graph name')
+    parser.add_argument('--out_npz', type=str, help='save file')
     parser.add_argument('--id', type=int, help='the partition id')
     parser.add_argument('--ip_config', type=str, help='The file for IP configuration')
     parser.add_argument('--part_config', type=str, help='The path to the partition config file')
