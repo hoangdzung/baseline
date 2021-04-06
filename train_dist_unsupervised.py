@@ -269,7 +269,7 @@ def generate_emb(model, g, inputs, batch_size, device):
 
     return pred
 
-def compute_acc(emb, labels, train_nids, val_nids, test_nids):
+def compute_acc(emb, labels, train_nids, val_nids, test_nids,seed):
     """
     Compute the accuracy of prediction given the labels.
     
@@ -292,7 +292,7 @@ def compute_acc(emb, labels, train_nids, val_nids, test_nids):
     labels = labels.cpu().numpy()
 
     emb = (emb - emb.mean(0, keepdims=True)) / emb.std(0, keepdims=True)
-    lr = lm.LogisticRegression(multi_class='multinomial', max_iter=10000)
+    lr = lm.LogisticRegression(multi_class='multinomial', max_iter=10000, random_state=seed)
     lr.fit(emb[train_nids], labels[train_nids])
 
     pred = lr.predict(emb)
@@ -410,8 +410,9 @@ def run(args, device, data):
         pred = generate_emb(model.module, g, g.ndata['feat'], args.batch_size_eval, device)
     if g.rank() == 0:
         print("training time: ", time.time()-stime)
-        eval_acc, test_acc = compute_acc(pred, labels, global_train_nid, global_valid_nid, global_test_nid)
-        print('eval acc {:.4f}; test acc {:.4f}'.format(eval_acc, test_acc))
+        for seed in [100,200,300,400,500]:
+            eval_acc, test_acc = compute_acc(pred, labels, global_train_nid, global_valid_nid, global_test_nid)
+            print('eval acc {:.4f}; test acc {:.4f}'.format(eval_acc, test_acc))
 
     # sync for eval and test
     if not args.standalone:
