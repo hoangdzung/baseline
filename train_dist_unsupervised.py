@@ -39,7 +39,8 @@ class SAGE(nn.Module):
         self.layers.append(dglnn.SAGEConv(in_feats, n_hidden, 'mean'))
         for i in range(1, n_layers - 1):
             self.layers.append(dglnn.SAGEConv(n_hidden, n_hidden, 'mean'))
-        self.layers.append(dglnn.SAGEConv(n_hidden, n_classes, 'mean'))
+        # self.layers.append(dglnn.SAGEConv(n_hidden, n_classes, 'mean'))
+        self.layers.append(dglnn.SAGEConv(n_hidden, n_hidden, 'mean'))
         self.dropout = nn.Dropout(dropout)
         self.activation = activation
 
@@ -200,9 +201,9 @@ class DistSAGE(SAGE):
         y = dgl.distributed.DistTensor((g.number_of_nodes(), self.n_hidden), th.float32, 'h',
                                        persistent=True)
         for l, layer in enumerate(self.layers):
-            if l == len(self.layers) - 1:
-                y = dgl.distributed.DistTensor((g.number_of_nodes(), self.n_classes),
-                                               th.float32, 'h_last', persistent=True)
+            # if l == len(self.layers) - 1:
+            #     y = dgl.distributed.DistTensor((g.number_of_nodes(), self.n_classes),
+            #                                    th.float32, 'h_last', persistent=True)
 
             sampler = PosNeighborSampler(g, [-1], dgl.distributed.sample_neighbors)
             print('|V|={}, eval batch size: {}'.format(g.number_of_nodes(), batch_size))
@@ -365,7 +366,7 @@ def run(args, device, data):
             # The nodes for output lies at the RHS side of the last block.
 
             # Load the input features as well as output labels
-            batch_inputs = blocks[0].srcdata['features']
+            batch_inputs = blocks[0].srcdata['feat']
             copy_time = time.time()
             feat_copy_t.append(copy_time - tic_step)
 
@@ -469,7 +470,7 @@ if __name__ == '__main__':
     parser.add_argument('--num_gpus', type=int, default=-1, 
                         help="the number of GPU device. Use -1 for CPU training")
     parser.add_argument('--num_epochs', type=int, default=20)
-    parser.add_argument('--num_hidden', type=int, default=16)
+    parser.add_argument('--num_hidden', type=int, default=128)
     parser.add_argument('--num-layers', type=int, default=2)
     parser.add_argument('--fan_out', type=str, default='10,25')
     parser.add_argument('--batch_size', type=int, default=1000)
