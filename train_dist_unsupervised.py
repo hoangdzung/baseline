@@ -410,15 +410,17 @@ def run(args, device, data):
         pred = generate_emb(model.module, g, g.ndata['feat'], args.batch_size_eval, device)
     if g.rank() == 0:
         print("training time: ", time.time()-stime)
-        # pred = pred[np.arange(labels.shape[0])].cpu().numpy()
-        # global_train_nid = global_train_nid.cpu().numpy()
-        # global_val_nid = global_valid_nid.cpu().numpy()
-        # global_test_nid = global_test_nid.cpu().numpy()
-        # labels = labels.cpu().numpy()
-        # np.savez_compressed(args.out_npz, emb=pred, train_ids=global_train_nid, val_ids=global_val_nid, test_ids=global_test_nid,labels=labels)
-        for seed in [100,200,300,400,500]:
-            eval_acc, test_acc = compute_acc(pred, labels, global_train_nid, global_valid_nid, global_test_nid, seed)
-            print('eval acc {:.4f}; test acc {:.4f}'.format(eval_acc, test_acc))
+        if False:
+            pred = pred[np.arange(labels.shape[0])].cpu().numpy()
+            global_train_nid = global_train_nid.cpu().numpy()
+            global_val_nid = global_valid_nid.cpu().numpy()
+            global_test_nid = global_test_nid.cpu().numpy()
+            labels = labels.cpu().numpy()
+            np.savez(args.out_npz, emb=pred, train_ids=global_train_nid, val_ids=global_val_nid, test_ids=global_test_nid,labels=labels)
+        if True:
+            for seed in [100,200,300,400,500]:
+                eval_acc, test_acc = compute_acc(pred, labels, global_train_nid, global_valid_nid, global_test_nid, seed)
+                print('eval acc {:.4f}; test acc {:.4f}'.format(eval_acc, test_acc))
 
     # sync for eval and test
     if not args.standalone:
