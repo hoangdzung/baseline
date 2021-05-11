@@ -478,17 +478,17 @@ def run(args, device, data):
         pred = generate_emb(model.module, g, g.ndata['feat'], args.batch_size_eval, device)
     if g.rank() == 0:
         print("training time: ", time.time()-stime)
-        if False:
-            pred = pred[np.arange(labels.shape[0])].cpu().numpy()
-            global_train_nid = global_train_nid.cpu().numpy()
-            global_val_nid = global_valid_nid.cpu().numpy()
-            global_test_nid = global_test_nid.cpu().numpy()
-            labels = labels.cpu().numpy()
-            np.savez(args.out_npz, emb=pred, train_ids=global_train_nid, val_ids=global_val_nid, test_ids=global_test_nid,labels=labels)
-        if True:
-            for seed in [100,200,300,400,500]:
-                eval_acc, test_acc = compute_acc(pred, labels, global_train_nid, global_valid_nid, global_test_nid, seed)
-                print('eval acc {:.4f}; test acc {:.4f}'.format(eval_acc, test_acc))
+        # if False:
+        #     pred = pred[np.arange(labels.shape[0])].cpu().numpy()
+        #     global_train_nid = global_train_nid.cpu().numpy()
+        #     global_val_nid = global_valid_nid.cpu().numpy()
+        #     global_test_nid = global_test_nid.cpu().numpy()
+        #     labels = labels.cpu().numpy()
+        #     np.savez(args.out_npz, emb=pred, train_ids=global_train_nid, val_ids=global_val_nid, test_ids=global_test_nid,labels=labels)
+        # if True:
+        #     for seed in [100,200,300,400,500]:
+    eval_acc, test_acc = compute_acc(pred, labels, global_train_nid, global_valid_nid, global_test_nid, g.rank())
+    print('{} eval acc {:.4f}; test acc {:.4f}'.format(g.rank(), eval_acc, test_acc))
 
     # sync for eval and test
     if not args.standalone:
@@ -556,7 +556,7 @@ if __name__ == '__main__':
     parser.add_argument('--num-layers', type=int, default=2)
     parser.add_argument('--fan_out', type=str, default='10,25')
     parser.add_argument('--batch_size', type=int, default=1000)
-    parser.add_argument('--batch_size_eval', type=int, default=100000)
+    parser.add_argument('--batch_size_eval', type=int, default=1000)
     parser.add_argument('--log_every', type=int, default=20)
     parser.add_argument('--eval_every', type=int, default=5)
     parser.add_argument('--lr', type=float, default=0.003)
