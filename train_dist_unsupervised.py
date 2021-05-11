@@ -15,6 +15,7 @@ from dgl.data.utils import load_graphs
 import dgl.function as fn
 import dgl.nn.pytorch as dglnn
 
+import torch
 import torch as th
 import torch.nn as nn
 import torch.nn.functional as F
@@ -22,6 +23,15 @@ import torch.optim as optim
 import torch.multiprocessing as mp
 from dgl.distributed import DistDataLoader
 #from pyinstrument import Profiler
+from torch_sparse import SparseTensor
+from torch.utils.data import DataLoader
+from torch_geometric.utils.num_nodes import maybe_num_nodes
+
+try:
+    import torch_cluster  # noqa
+    random_walk = torch.ops.torch_cluster.random_walk
+except ImportError:
+    random_walk = None
 
 class SAGE(nn.Module):
     def __init__(self,
@@ -95,6 +105,47 @@ class SAGE(nn.Module):
             x = y
         return y
 
+class RandomWalk():
+    def __init__(self, edge_index, walk_length, context_size,
+                 walks_per_node=1, p=1, q=1, num_negative_samples=1,
+                 num_nodes=None, sparse=False ):
+        
+        if random_walk is None:
+            raise ImportError('`Node2Vec` requires `torch-cluster`.')
+        
+        N = maybe_num_nodes(edge_index, num_nodes)
+        row, col = edge_index
+        self.adj = SparseTensor(row=row, col=col, sparse_sizes=(N, N))
+        self.adj = self.adj.to('cpu')
+
+        assert walk_length >= context_size
+
+        self.walk_length = walk_length - 1
+        self.context_size = context_size
+        self.walks_per_node = walks_per_node
+        self.p = p
+        self.q = q
+        self.num_negative_samples = num_negative_samples
+        
+    def loader(self, **kwargs):
+        return DataLoader(range(self.adj.sparse_size(0)),
+                          collate_fn=self.sample, **kwargs)
+
+
+    def sample(self, batch):
+        if not isinstance(batch, torch.Tensor):
+            batch = torch.tensor(batch)
+        batch = batch.repeat(self.walks_per_node)
+        rowptr, col, _ = self.adj.csr()
+        rw = random_walk(rowptr, col, batch, self.walk_length, self.p, self.q)
+        if not isinstance(rw, torch.Tensor):
+            rw = rw[0]
+        walks = []
+        num_walks_per_rw = 1 + self.walk_length + 1 - self.context_size
+        for j in range(num_walks_per_rw):
+            for i in range(1,self.context_size):
+                walks.append(rw[:, [j,j+i]])    
+        return torch.cat(walks, dim=0)
 
 class NegativeSampler(object):
     def __init__(self, g, neg_nseeds):
@@ -105,18 +156,23 @@ class NegativeSampler(object):
         return self.neg_nseeds[th.randint(self.neg_nseeds.shape[0], (num_samples,))]
 
 class NeighborSampler(object):
-    def __init__(self, g, fanouts, neg_nseeds, sample_neighbors, num_negs, remove_edge):
+    def __init__(self, g, fanouts, neg_nseeds, sample_neighbors, num_negs, remove_edge, use_rw=False):
         self.g = g
         self.fanouts = fanouts
         self.sample_neighbors = sample_neighbors
         self.neg_sampler = NegativeSampler(g, neg_nseeds)
         self.num_negs = num_negs
         self.remove_edge = remove_edge
+        self.use_rw = use_rw
 
     def sample_blocks(self, seed_edges):
-        n_edges = len(seed_edges)
-        seed_edges = th.LongTensor(np.asarray(seed_edges))
-        heads, tails = self.g.find_edges(seed_edges)
+        if self.use_rw:
+            n_edges = seed_edges.shape[0]
+            heads, tails = seed_edges.T
+        else:
+            n_edges = len(seed_edges)
+            seed_edges = th.LongTensor(np.asarray(seed_edges))
+            heads, tails = self.g.find_edges(seed_edges)
 
         neg_tails = self.neg_sampler(self.num_negs * n_edges)
         neg_heads = heads.view(-1, 1).expand(n_edges, self.num_negs).flatten()
@@ -307,15 +363,27 @@ def run(args, device, data):
     train_eids, train_nids, in_feats, g, global_train_nid, global_valid_nid, global_test_nid, labels = data
     # Create sampler
     sampler = NeighborSampler(g, [int(fanout) for fanout in args.fan_out.split(',')], train_nids,
-                              dgl.distributed.sample_neighbors, args.num_negs, args.remove_edge)
+                            dgl.distributed.sample_neighbors, args.num_negs, args.remove_edge, use_rw=args.random_walk)
+    if args.random_walk:
+        all_heads, all_tails  =  g.find_edges(train_eids)
+        rw = RandomWalk(torch.stack([all_heads, all_tails]), walk_length=args.walk_length, context_size=args.context_size,walks_per_node=args.walks_per_node,num_nodes = g.num_nodes())
+        loader = rw.loader(batch_size=32, shuffle=False)
+        train_pairs = torch.cat([pos_rw for pos_rw in loader], dim=0)
 
-    # Create PyTorch DataLoader for constructing blocks
-    dataloader = dgl.distributed.DistDataLoader(
-        dataset=train_eids.numpy(),
-        batch_size=args.batch_size,
-        collate_fn=sampler.sample_blocks,
-        shuffle=True,
-        drop_last=False)
+        # Create PyTorch DataLoader for constructing blocks
+        dataloader = dgl.distributed.DistDataLoader(
+            dataset=train_pairs.numpy(),
+            batch_size=args.batch_size,
+            collate_fn=sampler.sample_blocks,
+            shuffle=True,
+            drop_last=False)
+    else:
+        dataloader = dgl.distributed.DistDataLoader(
+            dataset=train_eids.numpy(),
+            batch_size=args.batch_size,
+            collate_fn=sampler.sample_blocks,
+            shuffle=True,
+            drop_last=False)
 
     # Define model and optimizer
     model = DistSAGE(in_feats, args.num_hidden, args.num_hidden, args.num_layers, F.relu, args.dropout)
@@ -479,6 +547,10 @@ if __name__ == '__main__':
     parser.add_argument('--n_classes', type=int, help='the number of classes')
     parser.add_argument('--num_gpus', type=int, default=-1, 
                         help="the number of GPU device. Use -1 for CPU training")
+    parser.add_argument('--random_walk',action='store_true')
+    parser.add_argument('--walk_length', type=int, default=5)
+    parser.add_argument('--context_size', type=int, default=3)
+    parser.add_argument('--walks_per_node', type=int, default=1)
     parser.add_argument('--num_epochs', type=int, default=20)
     parser.add_argument('--num_hidden', type=int, default=128)
     parser.add_argument('--num-layers', type=int, default=2)
