@@ -8,8 +8,9 @@ from sklearn.svm import SVC
 from sklearn.cluster import MiniBatchKMeans
 from sklearn import metrics
 from sklearn.preprocessing import StandardScaler
+import argparse
 
-def parse_arg()
+def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--npz')
     parser.add_argument('--split')
@@ -174,3 +175,5 @@ def main(args):
         else:
             splits = None 
     eval(emb_dict, labels, splits, random_state=args.seed, clf=args.clf.strip().split(","))
+
+main(parse_args())
