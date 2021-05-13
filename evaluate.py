@@ -109,7 +109,7 @@ def eval(final_emb, labels, splits=None, random_state=42, clf=['mlp','sgd','lr',
             data.append(train_test_split(X, y, test_size=0.33, random_state=i))
         if 'mlp' in clf:
             print("MLPClassifier")
-            lr = MLPClassifier(alpha=1e-5,hidden_layer_sizes=(64,),,max_iter=5000)
+            lr = MLPClassifier(alpha=1e-5,hidden_layer_sizes=(64,),max_iter=5000)
             train_acc, test_acc = [], []
             for X_train, X_test, y_train, y_test in data:
                 lr.fit(X_train, y_train)
@@ -159,8 +159,8 @@ def main(args):
         
         splits = np.zeros((len(emb_dict),))
         splits[data['train_ids']] = 1
-        splits[data['val_ids']] = 1
-        splits[data['test_ids']] = 1
+        splits[data['val_ids']] = 2
+        splits[data['test_ids']] = 3
 
         labels = data['labels']      
     else:
