@@ -477,32 +477,21 @@ def run(args, device, data):
     else:
         pred = generate_emb(model.module, g, g.ndata['feat'], args.batch_size_eval, device)
     if g.rank() == 0:
+        if not args.eval:
+            pred = pred[np.arange(labels.shape[0])].cpu().numpy()
+            global_train_nid = global_train_nid.cpu().numpy()
+            global_val_nid = global_valid_nid.cpu().numpy()
+            global_test_nid = global_test_nid.cpu().numpy()
+            labels = labels.cpu().numpy()
+            np.savez(args.out_npz, emb=pred, train_ids=global_train_nid, val_ids=global_val_nid, test_ids=global_test_nid,labels=labels)
+        else:
+            eval_acc, test_acc = compute_acc(pred, labels, global_train_nid, global_valid_nid, global_test_nid, g.rank())
+            print('eval acc {:.4f}; test acc {:.4f}'.format(eval_acc, test_acc))
         print("training time: ", time.time()-stime)
-        # if False:
-        #     pred = pred[np.arange(labels.shape[0])].cpu().numpy()
-        #     global_train_nid = global_train_nid.cpu().numpy()
-        #     global_val_nid = global_valid_nid.cpu().numpy()
-        #     global_test_nid = global_test_nid.cpu().numpy()
-        #     labels = labels.cpu().numpy()
-        #     np.savez(args.out_npz, emb=pred, train_ids=global_train_nid, val_ids=global_val_nid, test_ids=global_test_nid,labels=labels)
-        # if True:
-        #     for seed in [100,200,300,400,500]:
-    eval_acc, test_acc = compute_acc(pred, labels, global_train_nid, global_valid_nid, global_test_nid, g.rank())
-    print('{} eval acc {:.4f}; test acc {:.4f}'.format(g.rank(), eval_acc, test_acc))
 
-    # sync for eval and test
     if not args.standalone:
         th.distributed.barrier()
-
-    if not args.standalone:
         g._client.barrier()
-
-        # save features into file
-        # if g.rank() == 0:
-            # th.save(pred, 'emb.pt')
-    else:
-        feat = g.ndata['feat']
-        # th.save(pred, 'emb.pt')
 
 def main(args):
     dgl.distributed.initialize(args.ip_config, args.num_servers, num_workers=args.num_workers)
@@ -570,6 +559,8 @@ if __name__ == '__main__':
         help="sharing neg nodes for positive nodes")
     parser.add_argument('--remove_edge', default=False, action='store_true',
         help="whether to remove edges during sampling")
+    parser.add_argument('--eval', default=False, action='store_true',
+        help="whether to eval immediately")
     args = parser.parse_args()
     assert args.num_workers == int(os.environ.get('DGL_NUM_SAMPLER')), \
     'The num_workers should be the same value with DGL_NUM_SAMPLER.'
