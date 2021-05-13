@@ -1,0 +1,1 @@
+sudo tshark -z conv,ip -p -f "tcp port 30050"
