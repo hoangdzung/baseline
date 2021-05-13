@@ -76,7 +76,7 @@ def eval(final_emb, labels, splits=None, random_state=42, clf=['mlp','sgd','lr',
             print(lr.score(X_test,y_test))
         if 'sgd' in clf:
             print("SGDClassifier")
-            lr=SGDClassifier(,max_iter=5000, tol=1e-3)
+            lr=SGDClassifier(max_iter=5000, tol=1e-3)
             lr.fit(X_train, y_train)
             print(lr.score(X_train,y_train))
             print(lr.score(X_val,y_val))
