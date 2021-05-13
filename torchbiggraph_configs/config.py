@@ -6,20 +6,23 @@
 # This source code is licensed under the BSD-style license found in the
 # LICENSE.txt file in the root directory of this source tree.
 
+import os 
+main_ip = os.environ['MAINIP']
+graph_dir = os.environ['DATADIR']
+graph_name = graph_dir.strip('/').split("/")[-1]
+num_partitions = int(graph_name.split("_")[-1])
 
 def get_torchbiggraph_config():
 
     config = dict(  # noqa
         # I/O data
-        entity_path="data/FB15k",
+        entity_path=graph_dir,
         edge_paths=[
-            "data/FB15k/freebase_mtr100_mte100-train_partitioned",
-            "data/FB15k/freebase_mtr100_mte100-valid_partitioned",
-            "data/FB15k/freebase_mtr100_mte100-test_partitioned",
+            os.path.join(graph_dir, graph_name)
         ],
-        checkpoint_path="model/fb15k",
+        checkpoint_path=os.path.join("model",graph_name),
         # Graph structure
-        entities={"all": {"num_partitions": 1}},
+        entities={"all": {"num_partitions": num_partitions}},
         relations=[
             {
                 "name": "all_edges",
@@ -30,18 +33,19 @@ def get_torchbiggraph_config():
         ],
         dynamic_relations=True,
         # Scoring model
-        dimension=400,
+        dimension=128,
         global_emb=False,
         comparator="dot",
         # Training
-        num_epochs=50,
-        batch_size=5000,
+        num_epochs=5,
         num_uniform_negs=1000,
         loss_fn="softmax",
         lr=0.1,
+        # regularization_coef=1e-3,
+        distributed_init_method="tcp://{}:30050".format(main_ip),
         # Evaluation during training
-        eval_fraction=0,
-        # GPU
+        eval_fraction=0,  # to reproduce results, we need to use all training data
+        num_machines = num_partitions
     )
 
     return config
