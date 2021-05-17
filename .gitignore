@@ -1,4 +1,6 @@
 data*
+test.file
+biggraph_data
 # IDE
 .idea
 
