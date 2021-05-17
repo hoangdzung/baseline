@@ -19,6 +19,8 @@ for line in tqdm(open(args.in_graph), desc='read in graph'):
     node1, node2 = list(map(int, line.strip().split()))
     if node1 == node2:
         continue
+    if node2 in adj_list[node1]:
+        continue
     n_edges += 1
     adj_list[node1].add(node2)
     adj_list[node2].add(node1)
