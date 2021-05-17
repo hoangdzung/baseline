@@ -13,8 +13,8 @@ import argparse
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--npz')
-    parser.add_argument('--split')
-    parser.add_argument('--label')
+    parser.add_argument('--splits')
+    parser.add_argument('--labels')
     parser.add_argument('--emb')
     parser.add_argument('--clf', default='lr')
     parser.add_argument('--seed', type=int, default=42)
@@ -154,8 +154,9 @@ def main(args):
     if args.npz is not None:
         data = np.load(args.npz)
         emb_dict = {}
-        for i in range(data['emb'].shape[0]):
-            emb_dict[i] = data['emb'][i] 
+        embs = data['emb']
+        for i in range(embs.shape[0]):
+            emb_dict[i] = embs[i] 
         
         splits = np.zeros((len(emb_dict),))
         splits[data['train_ids']] = 1
