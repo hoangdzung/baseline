@@ -7,7 +7,6 @@ def load_pubmed():
     from dgl.data import PubmedGraphDataset
     data = PubmedGraphDataset()
     g = data[0]
-    g.ndata['features'] = g.ndata.pop('feat')
     g.ndata['labels'] = g.ndata.pop('label')
     return g
 
@@ -15,7 +14,6 @@ def load_corafull():
     from dgl.data import CoraFullDataset
     data = CoraFullDataset()
     g = data[0]
-    g.ndata['features'] = g.ndata.pop('feat')
     g.ndata['labels'] = g.ndata.pop('label')
     return g
 
@@ -23,7 +21,6 @@ def  load_amazon_computer():
     from  dgl.data import AmazonCoBuyComputerDataset
     data = AmazonCoBuyComputerDataset()
     g = data[0]
-    g.ndata['features'] = g.ndata.pop('feat')
     g.ndata['labels'] = g.ndata.pop('label')
     return g
 
@@ -31,7 +28,6 @@ def  load_amazon_photo():
     from  dgl.data import AmazonCoBuyPhotoDataset
     data = AmazonCoBuyPhotoDataset()
     g = data[0]
-    g.ndata['features'] = g.ndata.pop('feat')
     g.ndata['labels'] = g.ndata.pop('label')
     return g
 
@@ -41,7 +37,6 @@ def load_reddit():
     # load reddit data
     data = RedditDataset()
     g = data[0]
-    g.ndata['features'] = g.ndata.pop('feat')
     g.ndata['labels'] = g.ndata.pop('label')
     return g
 
@@ -55,9 +50,8 @@ def load_ogb(name):
     graph, labels = data[0]
     labels = labels[:, 0]
 
-    g.ndata['features'] = g.ndata.pop('feat')
     graph.ndata['labels'] = labels
-    in_feats = graph.ndata['features'].shape[1]
+    in_feats = graph.ndata['feat'].shape[1]
     num_labels = len(th.unique(labels[th.logical_not(th.isnan(labels))]))
 
     # Find the node IDs in the training, validation, and test set.
@@ -77,7 +71,7 @@ def load_ogb(name):
 def load_custom(edgelist, features, labels):
     edge_list = np.loadtxt(edgelist).astype(int)
     g = dgl.graph((edge_list[:,0], edge_list[:,1]))
-    g.ndata['features'] = torch.tensor(np.loadtxt(features))
+    g.ndata['feat'] = torch.tensor(np.loadtxt(features)).float()
     g.ndata['labels'] = torch.tensor(np.loadtxt(labels))
     return g 
 

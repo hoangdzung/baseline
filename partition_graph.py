@@ -104,7 +104,7 @@ if __name__ == '__main__':
         edges_pybig[:,2]= edges[:,1]
         np.savetxt(os.path.join(text_datadir,'edgelist_pybig.txt'), edges_pybig, fmt='%d')
         try:
-            np.savetxt(os.path.join(text_datadir,'features.txt'), g.ndata['features'].numpy(), fmt='%f')
+            np.savetxt(os.path.join(text_datadir,'features.txt'), g.ndata['feat'].numpy(), fmt='%f')
         except:
             pass 
 
