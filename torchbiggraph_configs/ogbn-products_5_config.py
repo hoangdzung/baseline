@@ -6,18 +6,19 @@
 # This source code is licensed under the BSD-style license found in the
 # LICENSE.txt file in the root directory of this source tree.
 
+import os 
 
 def get_torchbiggraph_config():
 
     config = dict(  # noqa
         # I/O data
-        entity_path="ogbn-arxiv_big_5/",
+        entity_path="ogbn-products_big_rw_5/",
         edge_paths=[
-            "ogbn-arxiv_big_5/ogbn-arxiv_big_5/",
+            "ogbn-products_big_5/ogbn-products_big_rw_5/",
             # "data/FB15k/freebase_mtr100_mte100-valid_partitioned",
             # "data/FB15k/freebase_mtr100_mte100-test_partitioned",
         ],
-        checkpoint_path="model/ogbn-arxiv_5",
+        checkpoint_path="model/ogbn-products_5",
         # Graph structure
         entities={"all": {"num_partitions": 5}},
         relations=[
@@ -34,7 +35,7 @@ def get_torchbiggraph_config():
         global_emb=False,
         comparator="dot",
         # Training
-        num_epochs=5,
+        num_epochs=1,
         num_uniform_negs=1000,
         loss_fn="softmax",
         lr=0.1,
