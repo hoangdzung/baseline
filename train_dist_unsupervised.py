@@ -479,11 +479,14 @@ def run(args, device, data):
     if g.rank() == 0:
         if not args.eval:
             pred = pred[np.arange(labels.shape[0])].cpu().numpy()
-            global_train_nid = global_train_nid.cpu().numpy()
-            global_val_nid = global_valid_nid.cpu().numpy()
-            global_test_nid = global_test_nid.cpu().numpy()
             labels = labels.cpu().numpy()
-            np.savez(args.out_npz, emb=pred, train_ids=global_train_nid, val_ids=global_val_nid, test_ids=global_test_nid,labels=labels)
+            if global_train_nid is not None:
+                global_train_nid = global_train_nid.cpu().numpy()
+                global_val_nid = global_valid_nid.cpu().numpy()
+                global_test_nid = global_test_nid.cpu().numpy()
+                np.savez(args.out_npz, emb=pred, train_ids=global_train_nid, val_ids=global_val_nid, test_ids=global_test_nid,labels=labels)
+            else:
+                np.savez(args.out_npz, emb=pred,labels=labels)
         else:
             eval_acc, test_acc = compute_acc(pred, labels, global_train_nid, global_valid_nid, global_test_nid, g.rank())
             print('eval acc {:.4f}; test acc {:.4f}'.format(eval_acc, test_acc))
@@ -503,9 +506,24 @@ def main(args):
 
     train_eids = dgl.distributed.edge_split(th.ones((g.number_of_edges(),), dtype=th.bool), g.get_partition_book(), force_even=True)
     train_nids = dgl.distributed.node_split(th.ones((g.number_of_nodes(),), dtype=th.bool), g.get_partition_book())
-    global_train_nid = th.LongTensor(np.nonzero(g.ndata['train_mask'][np.arange(g.number_of_nodes())]))
-    global_valid_nid = th.LongTensor(np.nonzero(g.ndata['val_mask'][np.arange(g.number_of_nodes())]))
-    global_test_nid = th.LongTensor(np.nonzero(g.ndata['test_mask'][np.arange(g.number_of_nodes())]))
+    if 'train_mask' in g.ndata:
+        global_train_nid = th.LongTensor(np.nonzero(g.ndata['train_mask'][np.arange(g.number_of_nodes())]))
+        global_train_nid = global_train_nid.squeeze()
+        print("number of train {}".format(global_train_nid.shape[0]))
+    else:
+        global_train_nid = None 
+    if 'val_mask' in g.ndata:
+        global_valid_nid = th.LongTensor(np.nonzero(g.ndata['val_mask'][np.arange(g.number_of_nodes())]))
+        global_valid_nid = global_valid_nid.squeeze()
+        print("number of valid {}".format(global_valid_nid.shape[0]))
+    else:
+        global_valid_nid = None 
+    if 'test_mask' in g.ndata:
+        global_test_nid = th.LongTensor(np.nonzero(g.ndata['test_mask'][np.arange(g.number_of_nodes())]))
+        global_test_nid = global_test_nid.squeeze()
+        print("number of test {}".format(global_test_nid.shape[0]))
+    else:
+        global_test_nid = None 
     labels = g.ndata['labels'][np.arange(g.number_of_nodes())]
     if args.num_gpus == -1:
         device = th.device('cpu')
@@ -514,12 +532,6 @@ def main(args):
 
     # Pack data
     in_feats = g.ndata['feat'].shape[1]
-    global_train_nid = global_train_nid.squeeze()
-    global_valid_nid = global_valid_nid.squeeze()
-    global_test_nid = global_test_nid.squeeze()
-    print("number of train {}".format(global_train_nid.shape[0]))
-    print("number of valid {}".format(global_valid_nid.shape[0]))
-    print("number of test {}".format(global_test_nid.shape[0]))
     data = train_eids, train_nids, in_feats, g, global_train_nid, global_valid_nid, global_test_nid, labels
     run(args, device, data)
     print("parent ends")
