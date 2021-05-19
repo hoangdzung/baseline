@@ -11,6 +11,12 @@ if __name__ == '__main__':
     argparser = argparse.ArgumentParser("Partition builtin graphs")
     argparser.add_argument('--dataset', type=str, default='reddit',
                            help='datasets: reddit, ogb-product, ogb-paper100M')
+    argparser.add_argument('--edgelist', type=str,
+                        help='path of edgelist file')
+    argparser.add_argument('--features', type=str,
+                        help='path of features file')
+    argparser.add_argument('--labels', type=str,
+                        help='path of labels file')
     argparser.add_argument('--num_parts', nargs='+', type=int,default=[],
                            help='number of partitions')
     argparser.add_argument('--part_method', type=str, default='metis',
@@ -44,6 +50,8 @@ if __name__ == '__main__':
         g = load_amazon_photo()
     elif args.dataset.startswith("ogbn"):
         g = load_ogb(args.dataset)
+    elif args.edgelist is not None:
+        g = load_custom(args.edgelist, args.features, args.labels)
     else:
         raise NotImplementedError
     print('load {} takes {:.3f} seconds'.format(args.dataset, time.time() - start))
