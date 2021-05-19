@@ -22,12 +22,17 @@ def parse_args():
     return args 
 
 def kmean_eval(X,y):
-    kmeans = MiniBatchKMeans(n_clusters=len(set(y)), random_state=0)
-    pred = kmeans.fit_predict(X)
-    print(metrics.fowlkes_mallows_score(y, pred))
-    print(metrics.homogeneity_score(y, pred))
-    print(metrics.completeness_score(y, pred))
-
+    metrics1, metrics2, metrics3 = [], [], []
+    for i in range(3):
+        kmeans = MiniBatchKMeans(n_clusters=len(set(y)), random_state=i)
+        pred = kmeans.fit_predict(X)
+    metrics1.append(metrics.fowlkes_mallows_score(y, pred))
+    metrics2.append(metrics.homogeneity_score(y, pred))
+    metrics3.append(metrics.completeness_score(y, pred))
+    print(np.mean(metrics1))
+    print(np.mean(metrics2))
+    print(np.mean(metrics3))
+    
 def eval(final_emb, labels, splits=None, random_state=42, clf=['mlp','sgd','lr','svm']):
     scaler = StandardScaler()
     if splits is not None:
@@ -158,11 +163,13 @@ def main(args):
         for i in range(embs.shape[0]):
             emb_dict[i] = embs[i] 
         
-        splits = np.zeros((len(emb_dict),))
-        splits[data['train_ids']] = 1
-        splits[data['val_ids']] = 2
-        splits[data['test_ids']] = 3
-
+        if 'train_ids' in data:
+            splits = np.zeros((len(emb_dict),))
+            splits[data['train_ids']] = 1
+            splits[data['val_ids']] = 2
+            splits[data['test_ids']] = 3
+        else:
+            splits = None
         labels = data['labels']      
     else:
         embs = np.loadtxt(args.emb)
