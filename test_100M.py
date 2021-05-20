@@ -3,7 +3,6 @@ import numpy as np
 import torch
 import random
 from train_utils import gnn, n2v, svd
-from eval_utils import eval
 import argparse
 
 parser = argparse.ArgumentParser()

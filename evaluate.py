@@ -32,7 +32,7 @@ def kmean_eval(X,y):
     print(np.mean(metrics1))
     print(np.mean(metrics2))
     print(np.mean(metrics3))
-    
+
 def eval(final_emb, labels, splits=None, random_state=42, clf=['mlp','sgd','lr','svm']):
     scaler = StandardScaler()
     if splits is not None:
@@ -177,7 +177,7 @@ def main(args):
         for i in range(embs.shape[0]):
             emb_dict[int(embs[i][0])] = embs[i][1:]
 
-        labels = np.loadtxt(args.labels).astype(int)[:,1]
+        labels = np.loadtxt(args.labels).astype(int)
         if args.splits is not None:
             splits = np.loadtxt(args.splits).astype(int)[:,1]
         else:
