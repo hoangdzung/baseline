@@ -33,7 +33,8 @@ node2id={}
 for i in range(part_ids[0], part_ids[1]+1):
 
     for line in tqdm(open(args.prefix_file+'{}'.format(i)), desc='Read part graph'):
-        node1, node2  = list(map(int,line.strip().split()))
+        node1, node2  = list(map(float,line.strip().split()))
+        node1, node2 = int(node1), int(node2)
         try:
             id1 = node2id[node1]
         except:
