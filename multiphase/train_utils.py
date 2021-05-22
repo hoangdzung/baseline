@@ -27,12 +27,17 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 torch.multiprocessing.set_sharing_strategy("file_system")
 
 
-def n2v(edge_list, part_id, round_id, ckpt_dir, embedding_dim=128, walk_length=10,
+def n2v(edge_list, node2id, init_dict=None, embedding_dim=128, walk_length=10,
         context_size=5, walks_per_node=10,tol=1e-4,verbose=False, epochs=100):
     edge_index = torch.tensor(np.array(edge_list).T, dtype=torch.long)
     data = Data(edge_index=edge_index)
     model = Node2Vec(data.edge_index, embedding_dim=embedding_dim, walk_length=walk_length,
                     context_size=context_size, walks_per_node=walks_per_node, sparse=True)
+    if init_dict is not None:
+        X = np.zeros((len(node2id), embedding_dim))
+        for node, idx in node2id.items()
+            X[idx] = init_dict[node]
+        model.embedding.data = torch.tensor(X)
 
     model = model.to(device)
     loader = model.loader(batch_size=32, shuffle=True)

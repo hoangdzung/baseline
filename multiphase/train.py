@@ -68,6 +68,10 @@ random.seed(args.seed)
 np.random.seed(args.seed)
 if not os.path.isdir(args.ckpt_dir):
     os.makedirs(args.ckpt_dir)
+else:
+    for i in os.listdir(args.ckpt_dir):
+        os.remove(os.path.join(args.ckpt_dir, i))
+
 if not os.path.isdir(args.emb_dir):
     os.makedirs(args.emb_dir)
 if args.feats is not None:
@@ -109,6 +113,7 @@ for i in range(part_ids[0], part_ids[1]+1):
 
 for r in range(min(args.rounds, part_ids[1]-part_ids[0])):
     emb_dicts = []
+    final_emb_merge = None
     for part_id, (edge_list, node2id, X) in enumerate(zip(edge_list_list, node2id_list, X_list)):
         if args.method == 'gnn':
             out = gnn(edge_list,np.array(X),
@@ -127,6 +132,7 @@ for r in range(min(args.rounds, part_ids[1]-part_ids[0])):
 
         elif args.method == 'n2v':
             out = n2v(edge_list, 
+                node2id = node2id,
                 embedding_dim=args.dim, 
                 walk_length=args.walk_length,
                 context_size=args.context_size, 
@@ -134,9 +140,7 @@ for r in range(min(args.rounds, part_ids[1]-part_ids[0])):
                 tol=args.tol,
                 verbose=args.verbose, 
                 epochs=args.epochs,                
-                ckpt_dir=args.ckpt_dir,
-                part_id=part_id,
-                round_id=r)
+                init_dict=final_emb_merge)
 
         emb_dict = {}
         for node, i in node2id.items():
@@ -148,5 +152,5 @@ for r in range(min(args.rounds, part_ids[1]-part_ids[0])):
     final_emb_merge = emb_dicts[0]
     for i in range(1,part_ids[1]-part_ids[0]+1):
         final_emb_merge = project(final_emb_merge,emb_dicts[i],corenodes)
-    pickle.dump(final_emb_merge, open(os.path.join(args.emb_dir, str(round_id)+'.pkl'), 'wb'))
+    pickle.dump(final_emb_merge, open(os.path.join(args.emb_dir, str(r)+'.pkl'), 'wb'))
   
