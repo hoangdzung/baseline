@@ -2,7 +2,7 @@ from tqdm import tqdm
 import numpy as np
 import torch
 import random
-from train_utils import gnn, n2v, svd
+from train_utils import gnn, n2v
 from eval_utils import eval
 import argparse
 import os 

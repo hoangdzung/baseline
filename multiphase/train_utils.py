@@ -37,7 +37,7 @@ def n2v(edge_list, part_id, round_id, ckpt_dir, embedding_dim=128, walk_length=1
     optimizer = torch.optim.SparseAdam(model.parameters(), lr=0.01)
     best_loss = 10e8
     n_step_without_progress = 0
-    for epoch in range(100):
+    for epoch in range(epochs):
         model.train()
         total_loss = 0
         if verbose:
@@ -261,7 +261,7 @@ def gnn(edge_list,X, part_id, round_id, ckpt_dir,fanouts = [10,25], use_rw=True,
 
     best_loss = 10e8
     n_step_without_progress = 0
-    for epoch in range(100):
+    for epoch in range(epochs):
         # Loop over the dataloader to sample the computation dependency graph as a list of
         # blocks.
         total_loss = 0

@@ -64,7 +64,7 @@ def eval(final_emb, labels, splits=None, random_state=42, clf=['mlp','sgd','lr',
             print(lr.score(X_test,y_test))
         if 'sgd' in clf:
             print("SGDClassifier")
-            lr=SGDClassifier(,max_iter=5000, tol=1e-3)
+            lr=SGDClassifier(max_iter=5000, tol=1e-3)
             lr.fit(X_train, y_train)
             print(lr.score(X_train,y_train))
             print(lr.score(X_val,y_val))
@@ -97,7 +97,7 @@ def eval(final_emb, labels, splits=None, random_state=42, clf=['mlp','sgd','lr',
             data.append(train_test_split(X, y, test_size=0.33, random_state=i))
         if 'mlp' in clf:
             print("MLPClassifier")
-            lr = MLPClassifier(alpha=1e-5,hidden_layer_sizes=(64,),,max_iter=5000)
+            lr = MLPClassifier(alpha=1e-5,hidden_layer_sizes=(64,),max_iter=5000)
             train_acc, test_acc = [], []
             for X_train, X_test, y_train, y_test in data:
                 lr.fit(X_train, y_train)
