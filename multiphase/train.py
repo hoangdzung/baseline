@@ -70,17 +70,10 @@ if not os.path.isdir(args.ckpt_dir):
     os.makedirs(args.ckpt_dir)
 if not os.path.isdir(args.emb_dir):
     os.makedirs(args.emb_dir)
-labels = np.loadtxt(args.labels).astype(int)#[:,1]
-
 if args.feats is not None:
     feats = np.loadtxt(args.feats).astype(int)
 else:
     feats = np.ones((len(labels), 128))
-
-if args.splits is not None:
-    splits = np.loadtxt(args.splits).astype(int)[:,1]
-else:
-    splits = None 
 
 part_ids = [int(i) for i in args.part_id.split(",")]
 assert len(part_ids) == 2
