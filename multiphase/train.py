@@ -3,19 +3,17 @@ import numpy as np
 import torch
 import random
 from train_utils import gnn, n2v
-from eval_utils import eval
 import argparse
 import os 
+import pickle
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--prefix_file')
 parser.add_argument('--part_id')
-parser.add_argument('--labels')
-parser.add_argument('--splits')
 parser.add_argument('--feats')
 parser.add_argument('--method')
-parser.add_argument('--clf')
 parser.add_argument('--ckpt_dir')
+parser.add_argument('--emb_dir')
 parser.add_argument('--dim', type=int, default=128)
 parser.add_argument('--walk_length', type=int, default=5)
 parser.add_argument('--context_size', type=int, default=3)
@@ -70,7 +68,8 @@ random.seed(args.seed)
 np.random.seed(args.seed)
 if not os.path.isdir(args.ckpt_dir):
     os.makedirs(args.ckpt_dir)
-
+if not os.path.isdir(args.emb_dir):
+    os.makedirs(args.emb_dir)
 labels = np.loadtxt(args.labels).astype(int)#[:,1]
 
 if args.feats is not None:
@@ -156,5 +155,5 @@ for r in range(min(args.rounds, part_ids[1]-part_ids[0])):
     final_emb_merge = emb_dicts[0]
     for i in range(1,part_ids[1]-part_ids[0]+1):
         final_emb_merge = project(final_emb_merge,emb_dicts[i],corenodes)
-    eval(final_emb_merge, labels, splits,clf=args.clf.split(","))
+    pickle.dump(final_emb_merge, open(os.path.join(args.emb_dir, str(round_id)+'.pkl'), 'wb'))
   

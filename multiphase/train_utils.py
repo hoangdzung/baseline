@@ -20,7 +20,9 @@ try:
     random_walk = torch.ops.torch_cluster.random_walk
 except ImportError:
     random_walk = None
-    
+
+import os 
+
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 torch.multiprocessing.set_sharing_strategy("file_system")
 

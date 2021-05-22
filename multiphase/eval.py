@@ -137,3 +137,29 @@ def eval(final_emb, labels, splits=None, random_state=42, clf=['mlp','sgd','lr',
             print(np.mean(test_acc))
         if 'kmean' in clf:
             kmean_eval(X,y)
+
+if __name__= '__main__':
+    import argparse
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--splits')
+    parser.add_argument('--labels')
+    parser.add_argument('--clf')
+    parser.add_argument('--emb_dict')
+    parser.add_argument('--tol', type=float, default=1e-3)
+
+    args = parser.parse_args()
+
+    labels = np.loadtxt(args.labels).astype(int)#[:,1]
+
+    if args.feats is not None:
+        feats = np.loadtxt(args.feats).astype(int)
+    else:
+        feats = np.ones((len(labels), 128))
+
+    if args.splits is not None:
+        splits = np.loadtxt(args.splits).astype(int)[:,1]
+    else:
+        splits = None 
+    final_emb_merge = pickle.load(open(args.emb_dict,'rb'))   
+    eval(final_emb_merge, labels, splits,clf=args.clf.split(","))
