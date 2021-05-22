@@ -8,6 +8,7 @@ from sklearn.svm import SVC
 from sklearn.cluster import MiniBatchKMeans
 from sklearn import metrics
 from sklearn.preprocessing import StandardScaler
+import pickle 
 
 def kmean_eval(X,y):
     kmeans = MiniBatchKMeans(n_clusters=len(set(y)), random_state=0)
@@ -28,13 +29,13 @@ def eval(final_emb, labels, splits=None, random_state=42, clf=['mlp','sgd','lr',
         for node, emb in final_emb.items():
             if splits[node] == 1:
                 X_train.append(emb)
-                y_train.append(str(labels[node]))
+                y_train.append(int(labels[node]))
             elif splits[node] == 2:
                 X_val.append(emb)
-                y_val.append(str(labels[node]))
+                y_val.append(int(labels[node]))
             elif splits[node] == 3:
                 X_test.append(emb)
-                y_test.append(str(labels[node]))
+                y_test.append(int(labels[node]))
                 
         X_train=np.stack(X_train)
         y_train=np.array(y_train)
@@ -138,7 +139,7 @@ def eval(final_emb, labels, splits=None, random_state=42, clf=['mlp','sgd','lr',
         if 'kmean' in clf:
             kmean_eval(X,y)
 
-if __name__= '__main__':
+if __name__ == '__main__':
     import argparse
 
     parser = argparse.ArgumentParser()
@@ -146,20 +147,15 @@ if __name__= '__main__':
     parser.add_argument('--labels')
     parser.add_argument('--clf')
     parser.add_argument('--emb_dict')
-    parser.add_argument('--tol', type=float, default=1e-3)
 
     args = parser.parse_args()
 
     labels = np.loadtxt(args.labels).astype(int)#[:,1]
-
-    if args.feats is not None:
-        feats = np.loadtxt(args.feats).astype(int)
-    else:
-        feats = np.ones((len(labels), 128))
 
     if args.splits is not None:
         splits = np.loadtxt(args.splits).astype(int)[:,1]
     else:
         splits = None 
     final_emb_merge = pickle.load(open(args.emb_dict,'rb'))   
+    import pdb;pdb.set_trace()
     eval(final_emb_merge, labels, splits,clf=args.clf.split(","))

@@ -35,7 +35,7 @@ def n2v(edge_list, node2id, init_dict=None, embedding_dim=128, walk_length=10,
                     context_size=context_size, walks_per_node=walks_per_node, sparse=True)
     if init_dict is not None:
         X = np.zeros((len(node2id), embedding_dim))
-        for node, idx in node2id.items()
+        for node, idx in node2id.items():
             X[idx] = init_dict[node]
         model.embedding.data = torch.tensor(X)
 
