@@ -15,9 +15,9 @@ parser.add_argument('--ckpt_dir')
 parser.add_argument('--emb_dir')
 parser.add_argument('--join')
 parser.add_argument('--dim', type=int, default=128)
-parser.add_argument('--walk_length', type=int, default=5)
-parser.add_argument('--context_size', type=int, default=3)
-parser.add_argument('--walks_per_node', type=int, default=1)
+parser.add_argument('--walk_length', type=int, default=4)
+parser.add_argument('--context_size', type=int, default=2)
+parser.add_argument('--walks_per_node', type=int, default=2)
 parser.add_argument('--fanouts', default="5,10")
 parser.add_argument('--epochs', type=int, default=10)
 parser.add_argument('--rounds', type=int, default=5)
@@ -61,9 +61,6 @@ def project(x, y, common_nodes = None ):
     new_model.update(anchors_model)
 
     return new_model
-
-assert args.method in ['gnn','n2v'], "Only support gnn n2v"
-assert args.join in ['project','rand']
 
 torch.manual_seed(args.seed)
 random.seed(args.seed)
