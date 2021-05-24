@@ -260,7 +260,7 @@ def gnn(edge_list,X, part_id, round_id, ckpt_dir,fanouts = [10,25], use_rw=True,
     in_feats = nfeat.shape[1]
     model = SAGE(in_feats, embedding_dim, len(fanouts), F.relu, 0.5)
     model = model.to(device)
-    ckpt_file = os.path.join(ckpt_dir, str(part_id+round_id)+'.pt')
+    ckpt_file = os.path.join(ckpt_dir, str(part_id+round_id)+"_"+str(round_id-1)+'.pt')
     if os.path.isfile(ckpt_file):
         model.load_state_dict(torch.load(ckpt_file))
     loss_fcn = CrossEntropyLoss()
@@ -312,7 +312,7 @@ def gnn(edge_list,X, part_id, round_id, ckpt_dir,fanouts = [10,25], use_rw=True,
             n_step_without_progress = 0
         if verbose:
             print("Epoch {}: loss {} best loss {} #step without progress {}".format(epoch, total_loss, best_loss, n_step_without_progress))
-    torch.save(model.state_dict(), os.path.join(ckpt_dir, str(part_id)+'.pt'))
+    torch.save(model.state_dict(), os.path.join(ckpt_dir, str(part_id)+"_"+str(round_id)+'.pt'))
     model.eval()
     out = model.inference(G, nfeat, device).detach().numpy()
 

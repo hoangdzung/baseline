@@ -59,9 +59,6 @@ def project(x, y, common_nodes = None ):
 
     return new_model
 
-assert args.method in ['gnn','n2v'], "Only support gnn n2v"
-assert args.join in ['project','rand']
-
 torch.manual_seed(args.seed)
 random.seed(args.seed)
 np.random.seed(args.seed)
@@ -123,7 +120,7 @@ corenodes=set(emb_dicts[0]).intersection(emb_dicts[1])
 if 'project' in args.join:
     final_emb_merge = emb_dicts[0]
     for i in range(1,part_ids[1]-part_ids[0]+1):
-        final_emb_merge = project(final_emb_merge,emb_dicts[i],a1)
+        final_emb_merge = project(final_emb_merge,emb_dicts[i],corenodes)
     pickle.dump(final_emb_merge, open(os.path.join(args.emb_dir, 'project'+ args.round_id+'.pkl'), 'wb'))
 if 'rand' in args.join:
     final_emb_merge = emb_dicts[0]

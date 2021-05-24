@@ -159,5 +159,4 @@ if __name__ == '__main__':
     else:
         splits = None 
     final_emb_merge = pickle.load(open(args.emb_dict,'rb'))   
-    import pdb;pdb.set_trace()
     eval(final_emb_merge, labels, splits,clf=args.clf.split(","))
