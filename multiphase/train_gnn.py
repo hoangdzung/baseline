@@ -139,7 +139,7 @@ for r in range(min(args.rounds, part_ids[1]-part_ids[0])):
     if 'project' in args.join:
         final_emb_merge = emb_dicts[0]
         for i in range(1,part_ids[1]-part_ids[0]+1):
-            final_emb_merge = project(final_emb_merge,emb_dicts[i],a1)
+            final_emb_merge = project(final_emb_merge,emb_dicts[i],corenodes)
         pickle.dump(final_emb_merge, open(os.path.join(args.emb_dir, 'project'+ str(r)+'.pkl'), 'wb'))
     if 'rand' in args.join:
         final_emb_merge = emb_dicts[0]
