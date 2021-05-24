@@ -150,7 +150,9 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    labels = np.loadtxt(args.labels).astype(int)#[:,1]
+    labels = np.loadtxt(args.labels).astype(int)
+    if len(labels.shape)>1:
+        labels = labels[:,1]
 
     if args.splits is not None:
         splits = np.loadtxt(args.splits).astype(int)[:,1]
