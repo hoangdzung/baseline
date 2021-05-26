@@ -429,6 +429,8 @@ def run(args, device, data, global_stime=None):
         # Loop over the dataloader to sample the computation dependency graph as a list of
         # blocks.
         for step, (pos_graph, neg_graph, blocks) in enumerate(dataloader):
+            if args.test_recover:
+                break
             tic_step = time.time()
             sample_t.append(tic_step - start)
 
@@ -474,12 +476,12 @@ def run(args, device, data, global_stime=None):
 
         print('[{}]Epoch Time(s): {:.4f}, sample: {:.4f}, data copy: {:.4f}, forward: {:.4f}, backward: {:.4f}, update: {:.4f}, #seeds: {}, #inputs: {}'.format(
             g.rank(), np.sum(step_time), np.sum(sample_t), np.sum(feat_copy_t), np.sum(forward_t), np.sum(backward_t), np.sum(update_t), num_seeds, num_inputs))
+        if g.rank() ==0:
+            torch.save([model.state_dict(), epoch], args.checkpoint)
+        if epoch < args.interrupt_epoch and g.rank() ==0:
+            sys.exit(137)
         th.distributed.barrier()
         g._client.barrier()
-        if epoch == args.interrupt_epoch and g.rank() ==0:
-            torch.save([model.state_dict(), epoch], args.checkpoint)
-            sys.exit(137)
-
 
     # evaluate the embedding using LogisticRegression
     if args.standalone:
@@ -489,15 +491,15 @@ def run(args, device, data, global_stime=None):
     if g.rank() == 0:
         if not args.eval:
             if args.out_npz is not None:
-            pred = pred[np.arange(labels.shape[0])].cpu().numpy()
-            labels = labels.cpu().numpy()
-            if global_train_nid is not None:
-                global_train_nid = global_train_nid.cpu().numpy()
-                global_val_nid = global_valid_nid.cpu().numpy()
-                global_test_nid = global_test_nid.cpu().numpy()
-                np.savez(args.out_npz, emb=pred, train_ids=global_train_nid, val_ids=global_val_nid, test_ids=global_test_nid,labels=labels)
-            else:
-                np.savez(args.out_npz, emb=pred,labels=labels)
+                pred = pred[np.arange(labels.shape[0])].cpu().numpy()
+                labels = labels.cpu().numpy()
+                if global_train_nid is not None:
+                    global_train_nid = global_train_nid.cpu().numpy()
+                    global_val_nid = global_valid_nid.cpu().numpy()
+                    global_test_nid = global_test_nid.cpu().numpy()
+                    np.savez(args.out_npz, emb=pred, train_ids=global_train_nid, val_ids=global_val_nid, test_ids=global_test_nid,labels=labels)
+                else:
+                    np.savez(args.out_npz, emb=pred,labels=labels)
         else:
             eval_acc, test_acc = compute_acc(pred, labels, global_train_nid, global_valid_nid, global_test_nid, g.rank())
             print('eval acc {:.4f}; test acc {:.4f}'.format(eval_acc, test_acc))
@@ -586,6 +588,8 @@ if __name__ == '__main__':
         help="whether to remove edges during sampling")
     parser.add_argument('--eval', default=False, action='store_true',
         help="whether to eval immediately")
+    parser.add_argument('--test_recover', default=False, action='store_true',
+        help="whether to test recover ability, if test not run training at all")
     args = parser.parse_args()
     assert args.num_workers == int(os.environ.get('DGL_NUM_SAMPLER')), \
     'The num_workers should be the same value with DGL_NUM_SAMPLER.'
