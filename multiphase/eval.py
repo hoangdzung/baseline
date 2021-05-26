@@ -146,10 +146,10 @@ if __name__ == '__main__':
     parser.add_argument('--splits')
     parser.add_argument('--labels')
     parser.add_argument('--clf')
-    parser.add_argument('--emb_dict')
+    parser.add_argument('--emb_dicts', nargs='+',default=[])
 
     args = parser.parse_args()
-
+    assert len(args.emb_dicts) >= 1
     labels = np.loadtxt(args.labels).astype(int)
     if len(labels.shape)>1:
         labels = labels[:,1]
@@ -157,6 +157,14 @@ if __name__ == '__main__':
     if args.splits is not None:
         splits = np.loadtxt(args.splits).astype(int)[:,1]
     else:
-        splits = None 
-    final_emb_merge = pickle.load(open(args.emb_dict,'rb'))   
-    eval(final_emb_merge, labels, splits,clf=args.clf.split(","))
+        splits = None
+
+    if len(args.emb_dicts) == 1:
+        emb_dict = pickle.load(open(args.emb_dicts[0],'rb'))
+    else:
+        emb_dicts = []
+        for emb_dict_path in args.emb_dicts:
+            emb_dicts.append(pickle.load(open(emb_dict_path,'rb')))   
+        nodes = set(emb_dicts[0]).intersection(*emb_dicts)
+        emb_dict = {node: np.concatenate([ emb[node] for emb in emb_dicts]) for node in nodes}
+    eval(emb_dict, labels, splits,clf=args.clf.split(","))
