@@ -32,6 +32,7 @@ try:
     random_walk = torch.ops.torch_cluster.random_walk
 except ImportError:
     random_walk = None
+import time 
 
 class SAGE(nn.Module):
     def __init__(self,
@@ -356,9 +357,8 @@ def compute_acc(emb, labels, train_nids, val_nids, test_nids,seed):
     test_acc = skm.accuracy_score(labels[test_nids], pred[test_nids])
     return eval_acc, test_acc
 
-def run(args, device, data):
+def run(args, device, data, global_stime=None):
     # Unpack data
-    import time
     stime = time.time()
     train_eids, train_nids, in_feats, g, global_train_nid, global_valid_nid, global_test_nid, labels = data
     # Create sampler
@@ -406,7 +406,7 @@ def run(args, device, data):
         model.load_state_dict(state_dict)
     else:
         curr_epoch = -1
-    epoch = 0
+    print("Init time ", time.time()-global_stime)
     for epoch in range(curr_epoch+1, args.num_epochs):
         sample_time = 0
         copy_time = 0
@@ -507,6 +507,7 @@ def run(args, device, data):
         g._client.barrier()
 
 def main(args):
+    stime = time.time()
     dgl.distributed.initialize(args.ip_config, args.num_servers, num_workers=args.num_workers)
     if not args.standalone:
         th.distributed.init_process_group(backend='gloo')
