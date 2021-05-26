@@ -35,7 +35,7 @@ def get_torchbiggraph_config():
         global_emb=False,
         comparator="dot",
         # Training
-        num_epochs=1,
+        num_epochs=int(os.environ['EPOCHS']),
         num_uniform_negs=1000,
         loss_fn="softmax",
         lr=0.1,
