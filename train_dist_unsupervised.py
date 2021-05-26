@@ -544,7 +544,7 @@ def main(args):
     # Pack data
     in_feats = g.ndata['feat'].shape[1]
     data = train_eids, train_nids, in_feats, g, global_train_nid, global_valid_nid, global_test_nid, labels
-    run(args, device, data)
+    run(args, device, data, stime)
     print("parent ends")
 
 if __name__ == '__main__':

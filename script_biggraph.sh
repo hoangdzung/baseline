@@ -8,7 +8,6 @@ then
     torchbiggraph_configs/${1}_${2}_config.py \
     --entities-output /mnt/${1}_big_rw_${2}.tsv \
     --relation-types-output /mnt/${1}_big_rw_${2}-edge.tsv
-    rm -r model
     rm /mnt/${1}_big_rw_${2}.tsv
     rm /mnt/${1}_big_rw_${2}-edge.tsv
 fi
