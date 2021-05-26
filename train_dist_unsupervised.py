@@ -476,12 +476,10 @@ def run(args, device, data, global_stime=None):
 
         print('[{}]Epoch Time(s): {:.4f}, sample: {:.4f}, data copy: {:.4f}, forward: {:.4f}, backward: {:.4f}, update: {:.4f}, #seeds: {}, #inputs: {}'.format(
             g.rank(), np.sum(step_time), np.sum(sample_t), np.sum(feat_copy_t), np.sum(forward_t), np.sum(backward_t), np.sum(update_t), num_seeds, num_inputs))
-        if g.rank() ==0:
+        if g.rank() ==0 and args.interrupt_epoch >0:
             torch.save([model.state_dict(), epoch], args.checkpoint)
         if epoch < args.interrupt_epoch and g.rank() ==0:
             sys.exit(137)
-        th.distributed.barrier()
-        g._client.barrier()
 
     # evaluate the embedding using LogisticRegression
     if args.standalone:
@@ -562,13 +560,13 @@ if __name__ == '__main__':
     parser.add_argument('--num_gpus', type=int, default=-1, 
                         help="the number of GPU device. Use -1 for CPU training")
     parser.add_argument('--random_walk',action='store_true')
-    parser.add_argument('--walk_length', type=int, default=5)
-    parser.add_argument('--context_size', type=int, default=3)
-    parser.add_argument('--walks_per_node', type=int, default=1)
+    parser.add_argument('--walk_length', type=int, default=4)
+    parser.add_argument('--context_size', type=int, default=2)
+    parser.add_argument('--walks_per_node', type=int, default=2)
     parser.add_argument('--num_epochs', type=int, default=20)
     parser.add_argument('--num_hidden', type=int, default=128)
     parser.add_argument('--num-layers', type=int, default=2)
-    parser.add_argument('--fan_out', type=str, default='10,25')
+    parser.add_argument('--fan_out', type=str, default='5,10')
     parser.add_argument('--batch_size', type=int, default=1000)
     parser.add_argument('--batch_size_eval', type=int, default=1000)
     parser.add_argument('--log_every', type=int, default=20)
@@ -583,7 +581,7 @@ if __name__ == '__main__':
     parser.add_argument('--neg_share', default=False, action='store_true',
         help="sharing neg nodes for positive nodes")
     parser.add_argument('--interrupt_epoch', type=int, default=-1)
-    parser.add_argument('--checkpoint')
+    parser.add_argument('--checkpoint',default='')
     parser.add_argument('--remove_edge', default=False, action='store_true',
         help="whether to remove edges during sampling")
     parser.add_argument('--eval', default=False, action='store_true',
