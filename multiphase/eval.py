@@ -140,8 +140,7 @@ def eval(final_emb, labels, splits=None, random_state=42, clf=['mlp','sgd','lr',
         if 'kmean' in clf:
             kmean_eval(X,y)
 
-def eval_vote(final_embs, labels, splits=None, random_state=42, clf=['mlp','sgd','lr','svm']):
-    assert splits is not None, "Not support None splits yet"
+def eval_vote(final_embs, nodes, labels, splits=None, random_state=42, clf=['mlp','sgd','lr','svm']):
     scaler = StandardScaler()
     val_prob_out_lr = []
     test_prob_out_lr = []
@@ -196,48 +195,73 @@ def eval_vote(final_embs, labels, splits=None, random_state=42, clf=['mlp','sgd'
             y_test_pred = np.argmax(sum(test_prob_out_mlp),axis=1)
             print(accuracy_score(y_val, y_val_pred))
             print(accuracy_score(y_test, y_test_pred))
-        if 'mlp' in clf:
+        if 'lr' in clf:
             print("LogisticRegression")
             y_val_pred = np.argmax(sum(val_prob_out_lr),axis=1)
             y_test_pred = np.argmax(sum(test_prob_out_lr),axis=1)
             print(accuracy_score(y_val, y_val_pred))
             print(accuracy_score(y_test, y_test_pred))
-    # else:
-    #     X = []
-    #     y = []
-    #     for node, emb in final_emb.items():
-    #         if labels[node] != -1:
-    #             X.append(emb)
-    #             y.append(str(labels[node]))
-    #     X = np.array(X)
-    #     y = np.array(y)
-        
-    #     X = scaler.fit_transform(X)
+    else:
+        nodes = [node for node in nodes if labels[node] != -1]
+        train_acc_lr = []
+        train_acc_mlp = []
+        test_acc_lr = []
+        test_acc_mlp = []
+        for i in range(3):
+            train_prob_out_lr = []
+            train_prob_out_mlp = []
+            test_prob_out_lr = []
+            test_prob_out_mlp = []
+            train_nodes, test_nodes = train_test_split(nodes, test_size=0.33, random_state=i)
+            for final_emb in final_embs: 
+                X_train = []
+                y_train = []
+                X_test = []
+                y_test = []
+                for node in train_nodes:
+                    X_train.append(emb)
+                    y_train.append(str(labels[node]))
+                for node in test_nodes:
+                    X_test.append(emb)
+                    y_test.append(str(labels[node]))
+                X_train=np.stack(X_train)
+                y_train=np.array(y_train)
+                X_test=np.stack(X_test)
+                y_test=np.array(y_test)
 
-    #     data = []
-    #     for i in range(3):
-    #         data.append(train_test_split(X, y, test_size=0.33, random_state=i))
-    #     if 'mlp' in clf:
-    #         print("MLPClassifier")
-    #         lr = MLPClassifier(alpha=1e-5,hidden_layer_sizes=(64,),max_iter=5000)
-    #         train_acc, test_acc = [], []
-    #         for X_train, X_test, y_train, y_test in data:
-    #             lr.fit(X_train, y_train)
-    #             train_acc.append(lr.score(X_train,y_train))
-    #             test_acc.append(lr.score(X_test,y_test))
-    #         print(np.mean(train_acc))
-    #         print(np.mean(test_acc))
-    #     if 'lr' in clf:
-    #         print("LogisticRegression")
-    #         lr=LogisticRegression(multi_class='multinomial',max_iter=5000)
-    #         train_acc, test_acc = [], []
-    #         for X_train, X_test, y_train, y_test in data:
-    #             lr.fit(X_train, y_train)
-    #             train_acc.append(lr.score(X_train,y_train))
-    #             test_acc.append(lr.score(X_test,y_test))
-    #         print(np.mean(train_acc))
-    #         print(np.mean(test_acc))
+                scaler.fit(np.vstack([X_train, X_test]))
+                X_train = scaler.transform(X_train)
+                X_test = scaler.transform(X_test)
+                
+                if 'mlp' in clf:
+                    lr = MLPClassifier(alpha=1e-5,hidden_layer_sizes=(64,),max_iter=5000)
+                    lr.fit(X_train, y_train)
+                    train_prob_out_mlp.append(lr.predict_proba(X_train))
+                    test_prob_out_mlp.append(lr.predict_proba(X_test))
 
+                if 'lr' in clf:
+                    lr=LogisticRegression(multi_class='multinomial',max_iter=5000)
+                    lr.fit(X_train, y_train)
+                    train_prob_out_lr.append(lr.predict_proba(X_train))
+                    test_prob_out_lr.append(lr.predict_proba(X_test))
+            if 'mlp' in clf:
+                y_train_pred = np.argmax(sum(train_prob_out_mlp),axis=1)
+                y_test_pred = np.argmax(sum(test_prob_out_mlp),axis=1)
+                train_acc_mlp.append(accuracy_score(y_train, y_train_pred))
+                test_acc_mlp.append(accuracy_score(y_test, y_test_pred))
+            if 'lr' in clf:
+                y_train_pred = np.argmax(sum(train_prob_out_lr),axis=1)
+                y_test_pred = np.argmax(sum(test_prob_out_lr),axis=1)
+                train_acc_lr.append(accuracy_score(y_train, y_train_pred))
+                test_acc_lr.append(accuracy_score(y_test, y_test_pred))
+        if 'mlp' in clf:
+            print("MLPClassifier")
+            print(np.mean(train_acc_mlp))
+            print(np.mean(test_acc_mlp))
+        if 'lr' in clf:
+            print("LogisticRegression")
+            print(np.mean(train_acc_lr))
+            print(np.mean(test_acc_lr))
 if __name__ == '__main__':
     import argparse
 
@@ -272,4 +296,4 @@ if __name__ == '__main__':
             eval(emb_dict, labels, splits,clf=args.clf.split(","))
         else:
             emb_dicts = [{node: emb_dict[node] for node in nodes} for emb_dict in emb_dicts]
-            eval_vote(emb_dicts, labels, splits,clf=args.clf.split(","))
+            eval_vote(emb_dicts, nodes, labels, splits,clf=args.clf.split(","))
