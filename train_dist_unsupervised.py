@@ -26,7 +26,7 @@ from dgl.distributed import DistDataLoader
 from torch_sparse import SparseTensor
 from torch.utils.data import DataLoader
 from torch_geometric.utils.num_nodes import maybe_num_nodes
-
+import sys 
 try:
     import torch_cluster  # noqa
     random_walk = torch.ops.torch_cluster.random_walk
@@ -401,8 +401,13 @@ def run(args, device, data):
     # Training loop
     #profiler = Profiler()
     #profiler.start()
+    if os.path.isfile(args.checkpoint):
+        state_dict, curr_epoch = torch.load(args.checkpoint)
+        model.load_state_dict(state_dict)
+    else:
+        curr_epoch = -1
     epoch = 0
-    for epoch in range(args.num_epochs):
+    for epoch in range(curr_epoch+1, args.num_epochs):
         sample_time = 0
         copy_time = 0
         forward_time = 0
@@ -469,7 +474,12 @@ def run(args, device, data):
 
         print('[{}]Epoch Time(s): {:.4f}, sample: {:.4f}, data copy: {:.4f}, forward: {:.4f}, backward: {:.4f}, update: {:.4f}, #seeds: {}, #inputs: {}'.format(
             g.rank(), np.sum(step_time), np.sum(sample_t), np.sum(feat_copy_t), np.sum(forward_t), np.sum(backward_t), np.sum(update_t), num_seeds, num_inputs))
-        epoch += 1
+        th.distributed.barrier()
+        g._client.barrier()
+        if epoch == args.interrupt_epoch and g.rank() ==0:
+            torch.save([model.state_dict(), epoch], args.checkpoint)
+            sys.exit(137)
+
 
     # evaluate the embedding using LogisticRegression
     if args.standalone:
@@ -478,6 +488,7 @@ def run(args, device, data):
         pred = generate_emb(model.module, g, g.ndata['feat'], args.batch_size_eval, device)
     if g.rank() == 0:
         if not args.eval:
+            if args.out_npz is not None:
             pred = pred[np.arange(labels.shape[0])].cpu().numpy()
             labels = labels.cpu().numpy()
             if global_train_nid is not None:
@@ -491,7 +502,6 @@ def run(args, device, data):
             eval_acc, test_acc = compute_acc(pred, labels, global_train_nid, global_valid_nid, global_test_nid, g.rank())
             print('eval acc {:.4f}; test acc {:.4f}'.format(eval_acc, test_acc))
         print("training time: ", time.time()-stime)
-
     if not args.standalone:
         th.distributed.barrier()
         g._client.barrier()
@@ -569,6 +579,8 @@ if __name__ == '__main__':
     parser.add_argument('--num_negs', type=int, default=1)
     parser.add_argument('--neg_share', default=False, action='store_true',
         help="sharing neg nodes for positive nodes")
+    parser.add_argument('--interrupt_epoch', type=int, default=-1)
+    parser.add_argument('--checkpoint')
     parser.add_argument('--remove_edge', default=False, action='store_true',
         help="whether to remove edges during sampling")
     parser.add_argument('--eval', default=False, action='store_true',
