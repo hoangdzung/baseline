@@ -60,7 +60,7 @@ np.random.seed(args.seed)
 
 edge_list=set()
 node2id={}
-for line in tqdm(open(args.prefix_file+'{}.txt'.format(i)), desc='Read part graph'):
+for line in tqdm(open(args.edgelist), desc='Read graph'):
     node1, node2  = list(map(int,line.strip().split()))
     try:
         id1 = node2id[node1]
@@ -79,7 +79,7 @@ edge_list = list(edge_list)
 nodes = [-1] * len(node2id)
 for node, idx in node2id.items():
     nodes[idx] = node 
-
+del node2id
 out = n2v(edge_list,node2id,
     embedding_dim=args.dim, 
     walk_length=args.walk_length,
