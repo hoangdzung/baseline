@@ -34,9 +34,14 @@ def n2v(edge_list, node2id, init_dict=None, embedding_dim=128, walk_length=10,
     model = Node2Vec(data.edge_index, embedding_dim=embedding_dim, walk_length=walk_length,
                     context_size=context_size, walks_per_node=walks_per_node, sparse=True)
     if init_dict is not None:
-        X = np.zeros((len(node2id), embedding_dim))
+        miss_nodes = []
+        X = np.random.randn(len(node2id), embedding_dim)
         for node, idx in node2id.items():
-            X[idx] = init_dict[node]
+            try:
+                X[idx] = init_dict[node]
+            except:
+                miss_nodes.append(node)
+        print("Missing {} nodes: {} ".format(len(miss_nodes), miss_nodes))
         model.embedding.data = torch.tensor(X)
 
     model = model.to(device)
