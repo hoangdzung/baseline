@@ -123,6 +123,6 @@ if os.path.isfile(args.ckpt):
 model.eval()
 out = model.inference(G, nfeat, device).detach().numpy()
 emb_dicts = {}
-for i in range(out.shape[1]):
+for i in range(out.shape[0]):
     emb_dicts[i] = out[i]
 pickle.dump(emb_dicts, open(args.out, 'wb'))
