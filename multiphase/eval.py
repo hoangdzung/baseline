@@ -291,6 +291,7 @@ if __name__ == '__main__':
         for emb_dict_path in args.emb_dicts:
             emb_dicts.append(pickle.load(open(emb_dict_path,'rb')))   
         nodes = set(emb_dicts[0]).intersection(*emb_dicts)
+        print("Missing {} node(s)".format(len(labels)-len(nodes)))
         if not args.voting:
             emb_dict = {node: np.concatenate([ emb[node] for emb in emb_dicts]) for node in nodes}
             eval(emb_dict, labels, splits,clf=args.clf.split(","))
