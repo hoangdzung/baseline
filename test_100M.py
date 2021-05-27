@@ -7,9 +7,8 @@ from gensim.models import Word2Vec
 import time 
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--prefix_file')
-parser.add_argument('--part_id')
-parser.add_argument('--dim', type=int, default=128)
+parser.add_argument('--edge_list')
+=parser.add_argument('--dim', type=int, default=128)
 parser.add_argument('--walk_length', type=int, default=4)
 parser.add_argument('--context_size', type=int, default=2)
 parser.add_argument('--walks_per_node', type=int, default=2)
@@ -26,14 +25,13 @@ assert len(part_ids) == 2
 
 walks = []
 # full_walks = []
-for i in range(part_ids[0], part_ids[1]+1):
-    for line in tqdm(open(args.prefix_file+'{}'.format(i)), desc='Read part graph'):
-        node1, node2  = list(map(float,line.strip().split()))
-        node1, node2 = str(int(node1)), str(int(node2))
+for line in tqdm(open(args.edge_list), desc='Read part graph'):
+    node1, node2  = list(map(float,line.strip().split()))
+    node1, node2 = str(int(node1)), str(int(node2))
 
-        if random.random() < args.prob:
-            walks.append([node1, node2])
-        # full_walks.append([node1, node2])
+    if random.random() < args.prob:
+        walks.append([node1, node2])
+    # full_walks.append([node1, node2])
 
 stime = time.time()
 model = Word2Vec(sentences=walks, size=args.dim, window=args.context_size, min_count=0, workers=args.num_workers, iter=args.max_iter)
