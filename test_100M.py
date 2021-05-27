@@ -8,7 +8,7 @@ import time
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--edge_list')
-=parser.add_argument('--dim', type=int, default=128)
+parser.add_argument('--dim', type=int, default=128)
 parser.add_argument('--walk_length', type=int, default=4)
 parser.add_argument('--context_size', type=int, default=2)
 parser.add_argument('--walks_per_node', type=int, default=2)
@@ -19,9 +19,6 @@ parser.add_argument('--num_workers', type=int, default=1)
 parser.add_argument('--prob', type=float, default=0.5)
 
 args = parser.parse_args()
-
-part_ids = [int(i) for i in args.part_id.split(",")]
-assert len(part_ids) == 2
 
 walks = []
 # full_walks = []
