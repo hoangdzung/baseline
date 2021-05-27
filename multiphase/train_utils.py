@@ -15,17 +15,14 @@ try:
     from torch_geometric.utils.num_nodes import maybe_num_nodes
     from torch_geometric.data import Data
     from torch_geometric.nn import Node2Vec
+    import torch_cluster  # noqa
+    random_walk = torch.ops.torch_cluster.random_walk
 except:
     print("Pytorch Geometric is not installed")
     SparseTensor = None 
     maybe_num_nodes = None 
     Data = None 
     Node2Vec = None
-    
-try:
-    import torch_cluster  # noqa
-    random_walk = torch.ops.torch_cluster.random_walk
-except ImportError:
     random_walk = None
 
 import os 
