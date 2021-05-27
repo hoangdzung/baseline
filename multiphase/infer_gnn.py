@@ -11,16 +11,6 @@ import dgl
 import dgl.function as fn
 import dgl.nn.pytorch as dglnn
 
-from torch_sparse import SparseTensor
-from torch_geometric.utils.num_nodes import maybe_num_nodes
-from torch_geometric.data import Data
-from torch_geometric.nn import Node2Vec
-try:
-    import torch_cluster  # noqa
-    random_walk = torch.ops.torch_cluster.random_walk
-except ImportError:
-    random_walk = None
-
 import os 
 import argparse
 import pickle 
