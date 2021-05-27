@@ -12,13 +12,13 @@ def get_torchbiggraph_config():
 
     config = dict(  # noqa
         # I/O data
-        entity_path="youtube_big_rw_2/",
+        entity_path="flickr_big_rw_2/",
         edge_paths=[
-            "youtube_big_2/youtube_big_rw_2/",
-            # "data/FB12k/freebase_mtr100_mte100-valid_partitioned",
-            # "data/FB12k/freebase_mtr100_mte100-test_partitioned",
+            "flickr_big_2/flickr_big_rw_2/",
+            # "data/FB15k/freebase_mtr100_mte100-valid_partitioned",
+            # "data/FB15k/freebase_mtr100_mte100-test_partitioned",
         ],
-        checkpoint_path="model/youtube_2",
+        checkpoint_path="model/flickr_2",
         # Graph structure
         entities={"all": {"num_partitions": 2}},
         relations=[
@@ -35,7 +35,7 @@ def get_torchbiggraph_config():
         global_emb=False,
         comparator="dot",
         # Training
-        num_epochs=int(os.environ['EPOCHS']),
+        num_epochs=1,
         num_uniform_negs=1000,
         loss_fn="softmax",
         lr=0.1,
