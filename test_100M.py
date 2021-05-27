@@ -3,7 +3,7 @@ import numpy as np
 import random
 import argparse
 from gensim.models import Word2Vec
-from fastnode2vec import Graph, Node2Vec
+# from fastnode2vec import Graph, Node2Vec
 import time 
 
 parser = argparse.ArgumentParser()
@@ -25,7 +25,7 @@ part_ids = [int(i) for i in args.part_id.split(",")]
 assert len(part_ids) == 2
 
 walks = []
-full_walks = []
+# full_walks = []
 for i in range(part_ids[0], part_ids[1]+1):
     for line in tqdm(open(args.prefix_file+'{}'.format(i)), desc='Read part graph'):
         node1, node2  = list(map(float,line.strip().split()))
@@ -33,15 +33,15 @@ for i in range(part_ids[0], part_ids[1]+1):
 
         if random.random() < args.prob:
             walks.append([node1, node2])
-        full_walks.append([node1, node2])
+        # full_walks.append([node1, node2])
 
 stime = time.time()
-model = Word2Vec(sentences=walks, vector_size=args.dim, window=args.context_size, min_count=0, workers=args.num_workers, epochs=args.max_iter)
+model = Word2Vec(sentences=walks, size=args.dim, window=args.context_size, min_count=0, workers=args.num_workers, iter=args.max_iter)
 print("Gensim take ", time.time()-stime)
 
-stime = time.time()
-graph = Graph(full_walks, directed=False, weighted=False)
+# stime = time.time()
+# graph = Graph(full_walks, directed=False, weighted=False)
               
-model2 = Node2Vec(graph, dim=128, walk_length=args.walk_length, context=args.context_size, workers=args.num_workers)
-model2.train(epochs=args.max_iter)
-print("FastNode2vec take ", time.time()-stime)
+# model2 = Node2Vec(graph, dim=128, walk_length=args.walk_length, context=args.context_size, workers=args.num_workers)
+# model2.train(epochs=args.max_iter)
+# print("FastNode2vec take ", time.time()-stime)

@@ -77,4 +77,3 @@ else:
     for embedding in embeddings:
         result = str([int(embedding[0])] + embedding[1:].tolist()).replace('[','').replace(']','').replace(',',' ') +'\t'
         print(result)
-    import pdb;pdb.set_trace()
