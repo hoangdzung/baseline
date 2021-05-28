@@ -50,7 +50,7 @@ def n2v(edge_list, node2id, round_id,init_dict=None, embedding_dim=128, walk_len
 
     model = model.to(device)
     loader = model.loader(batch_size=32, shuffle=True)
-    optimizer = torch.optim.SparseAdam(model.parameters(), lr=0.01/(round_id+1))
+    optimizer = torch.optim.SparseAdam(model.parameters(), lr=0.01/(int(round_id)+1))
     best_loss = 10e8
     n_step_without_progress = 0
     for epoch in range(epochs):
