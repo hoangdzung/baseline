@@ -31,7 +31,7 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 torch.multiprocessing.set_sharing_strategy("file_system")
 
 
-def n2v(edge_list, node2id, init_dict=None, embedding_dim=128, walk_length=10,
+def n2v(edge_list, node2id, round_id,init_dict=None, embedding_dim=128, walk_length=10,
         context_size=5, walks_per_node=10,tol=1e-4,verbose=False, epochs=100):
     edge_index = torch.tensor(np.array(edge_list).T, dtype=torch.long)
     data = Data(edge_index=edge_index)
@@ -50,7 +50,7 @@ def n2v(edge_list, node2id, init_dict=None, embedding_dim=128, walk_length=10,
 
     model = model.to(device)
     loader = model.loader(batch_size=32, shuffle=True)
-    optimizer = torch.optim.SparseAdam(model.parameters(), lr=0.01)
+    optimizer = torch.optim.SparseAdam(model.parameters(), lr=0.01/(round_id+1))
     best_loss = 10e8
     n_step_without_progress = 0
     for epoch in range(epochs):
@@ -273,7 +273,7 @@ def gnn(edge_list,X, part_id, round_id, ckpt_dir,fanouts = [10,25], use_rw=True,
     if os.path.isfile(ckpt_file):
         model.load_state_dict(torch.load(ckpt_file))
     loss_fcn = CrossEntropyLoss()
-    optimizer = optim.Adam(model.parameters(), lr=0.01)
+    optimizer = optim.Adam(model.parameters(), lr=0.01/(round_id+1))
 
     best_loss = 10e8
     n_step_without_progress = 0

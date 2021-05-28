@@ -101,6 +101,7 @@ for i in range(part_ids[0], part_ids[1]+1):
 emb_dicts = []
 for part_id, (edge_list, node2id) in enumerate(zip(edge_list_list, node2id_list)):
     out = n2v(edge_list,node2id,
+        round_id=args.round_id,
         init_dict=init_embs,
         embedding_dim=args.dim, 
         walk_length=args.walk_length,
