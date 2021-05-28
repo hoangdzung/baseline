@@ -271,6 +271,7 @@ if __name__ == '__main__':
     parser.add_argument('--clf')
     parser.add_argument('--emb_dicts', nargs='+',default=[])
     parser.add_argument('--voting', action='store_true')
+    parser.add_argument('--seed', type=int, default=42)
 
     args = parser.parse_args()
     assert len(args.emb_dicts) >= 1
@@ -285,7 +286,7 @@ if __name__ == '__main__':
 
     if len(args.emb_dicts) == 1:
         emb_dict = pickle.load(open(args.emb_dicts[0],'rb'))
-        eval(emb_dict, labels, splits,clf=args.clf.split(","))
+        eval(emb_dict, labels, splits,clf=args.clf.split(","), random_state=args.seed)
     else:
         emb_dicts = []
         for emb_dict_path in args.emb_dicts:
@@ -294,7 +295,7 @@ if __name__ == '__main__':
         print("Missing {} node(s)".format(len(labels)-len(nodes)))
         if not args.voting:
             emb_dict = {node: np.concatenate([ emb[node] for emb in emb_dicts]) for node in nodes}
-            eval(emb_dict, labels, splits,clf=args.clf.split(","))
+            eval(emb_dict, labels, splits,clf=args.clf.split(","),random_state=args.seed)
         else:
             emb_dicts = [{node: emb_dict[node] for node in nodes} for emb_dict in emb_dicts]
-            eval_vote(emb_dicts, nodes, labels, splits,clf=args.clf.split(","))
+            eval_vote(emb_dicts, nodes, labels, splits,clf=args.clf.split(","), random_state=args.seed)

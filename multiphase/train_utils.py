@@ -273,7 +273,7 @@ def gnn(edge_list,X, part_id, round_id, ckpt_dir,fanouts = [10,25], use_rw=True,
     if os.path.isfile(ckpt_file):
         model.load_state_dict(torch.load(ckpt_file))
     loss_fcn = CrossEntropyLoss()
-    optimizer = optim.Adam(model.parameters(), lr=0.01/(round_id+1))
+    optimizer = optim.Adam(model.parameters(), lr=0.01/(int(round_id)+1))
 
     best_loss = 10e8
     n_step_without_progress = 0
