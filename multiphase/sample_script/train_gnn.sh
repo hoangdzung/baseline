@@ -1,0 +1,2 @@
+python3 train_gnn.py --prefix_file ~/Graph-Partition-Spark/datapart/partaftermetis/ogbn-arxiv/0.001_2_5part1/_ --part_id 0,4  --feats ~/transfer_
+gnn/data/arxiv_text/features.txt  --emb_dir emb_gnn_1epoch/arxiv --ckpt_dir model_gnn_1epoch/arxiv/ --verbose --join rand,project --epochs 1

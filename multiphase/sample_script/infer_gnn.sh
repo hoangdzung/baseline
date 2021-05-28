@@ -1,0 +1,1 @@
+for i in 0 1 2 3 4; do for j in 0 1 2; do python3 infer_gnn.py --edgelist ~/transfer_gnn/data/arxiv_text/edgelist.txt --feats ~/transfer_gnn/data/arxiv_text/features.txt --ckpt model_gnn_1epoch/arxiv/${i}_${j}.pt --out emb_gnn_1epoch/arxiv/whole_${i}_${j}.pkl --fanouts 5,10; done; done

@@ -1,0 +1,1 @@
+python3 eval.py --splits ~/transfer_gnn/data/arxiv_text/splits.txt --labels ~/transfer_gnn/data/arxiv_text/labels.txt --clf kmean,mlp,lr --emb_dict emb_gnn_100epoch/arxiv/whole_0_1.pkl emb_gnn_100epoch/arxiv/whole_1_1.pkl emb_gnn_100epoch/arxiv/whole_2_1.pkl emb_gnn_100epoch/arxiv/whole_3_1.pkl emb_gnn_100epoch/arxiv/whole_4_1.pkl

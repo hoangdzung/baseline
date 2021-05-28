@@ -1,0 +1,1 @@
+python3 train_n2v.py --prefix_file ~/Graph-Partition-Spark/datapart/partaftermetis/ogbn-arxiv/0.001_2_5part1/_ --part_id 0,4  --emb_dir emb_n2v/arxiv --epochs 100 --verbose --join rand,project --round_id 0  --walks_per_node 10 --context_size 10 --walk_length 20
