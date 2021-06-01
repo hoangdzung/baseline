@@ -10,7 +10,7 @@ from sklearn import metrics
 from sklearn.preprocessing import StandardScaler
 import argparse
 import os 
-
+from tqdm import tqdm
 
 def project(x, y, common_nodes = None ):
     anchors_model = x
