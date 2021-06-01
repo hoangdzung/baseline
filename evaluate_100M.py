@@ -10,11 +10,48 @@ from sklearn import metrics
 from sklearn.preprocessing import StandardScaler
 import argparse
 
+
+def project(x, y, common_nodes = None ):
+    anchors_model = x
+    project_model = y
+
+    common_nodes_ = set(anchors_model).intersection(project_model)
+    n_common_nodes = int(len(common_nodes_))
+    common_nodes_ = list(common_nodes_)[:n_common_nodes]
+    if common_nodes is None:
+        common_nodes = common_nodes_
+    else:
+        common_nodes = set(common_nodes).intersection(common_nodes_)
+
+    if len(common_nodes) == 0:
+        new_model = y.copy()
+        new_model.update(x)
+        return new_model
+
+    anchors_emb = np.stack([anchors_model[i] for i in common_nodes])
+#     anchors_emb = anchors_emb/np.sqrt(np.sum(anchors_emb**2,axis=1,keepdims=True))
+
+    tobechanged_emb = np.stack([project_model[i] for i in common_nodes])
+#     tobechanged_emb = tobechanged_emb/np.sqrt(np.sum(tobechanged_emb**2,axis=1,keepdims=True))
+
+    trans_matrix, c, _,_ = np.linalg.lstsq(tobechanged_emb, anchors_emb, rcond=-1)
+    tobechanged_emb = np.stack([project_model[i] for i in project_model])
+#     tobechanged_emb = tobechanged_emb/np.sqrt(np.sum(tobechanged_emb**2,axis=1,keepdims=True))
+
+    new_embeddings = np.matmul(tobechanged_emb, trans_matrix)
+
+    new_model = dict(zip(project_model.keys(), new_embeddings))
+    new_model.update(anchors_model)
+
+    return new_model
+
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--splits')
     parser.add_argument('--labels')
-    parser.add_argument('--emb')
+    parser.add_argument('--emb_dir')
+    parser.add_argument('--core_rate', type=float, default=1.0)
+    parser.add_argument('--join')
     parser.add_argument('--clf', default='lr')
     parser.add_argument('--seed', type=int, default=42)
     args = parser.parse_args()
@@ -97,11 +134,14 @@ def eval(final_emb, labels, splits, random_state=42, clf=['mlp','sgd','lr','svm'
         kmean_eval(X,y)
  
 def main(args):
-  
-    embs = np.loadtxt(args.emb)
-    emb_dict = {}
-    for i in range(embs.shape[0]):
-        emb_dict[int(embs[i][0])] = embs[i][1:]
+    
+    emb_dicts = []
+    for f in os.listdir(args.emb_dir)
+        embs = np.loadtxt(os.path.join(args.emb_dir, f))
+        emb_dict = {}
+        for i in range(embs.shape[0]):
+            emb_dict[int(embs[i][0])] = embs[i][1:]
+        emb_dicts.append(emb_dict)
 
     labels = np.loadtxt(args.labels).astype(int)
     label_dict = {}
@@ -112,6 +152,19 @@ def main(args):
     split_dict = {}
     for i in range(splits.shape[0]):
         split_dict[splits[i][0]] = splits[i][1]
-    eval(emb_dict, label_dict, split_dict, random_state=args.seed, clf=args.clf.strip().split(","))
+
+    if 'project' in args.join:
+        corenodes=list(set(emb_dicts[0]).intersection(emb_dicts[1]))
+        n_core = int(len(corenodes)*args.core_rate)
+        final_emb_merge = emb_dicts[0]
+        for i in range(1,part_ids[1]-part_ids[0]+1):
+            final_emb_merge = project(final_emb_merge,emb_dicts[i],corenodes[:n_core])
+        eval(final_emb_merge, label_dict, split_dict, random_state=args.seed, clf=args.clf.strip().split(","))
+
+    if 'rand' in args.join:
+        final_emb_merge = emb_dicts[0]
+        for i in range(1,part_ids[1]-part_ids[0]+1):
+            final_emb_merge.update(emb_dicts[i])
+        eval(final_emb_merge, label_dict, split_dict, random_state=args.seed, clf=args.clf.strip().split(","))
 
 main(parse_args())
