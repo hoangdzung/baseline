@@ -9,6 +9,7 @@ from sklearn.cluster import MiniBatchKMeans
 from sklearn import metrics
 from sklearn.preprocessing import StandardScaler
 import argparse
+import os 
 
 
 def project(x, y, common_nodes = None ):
@@ -136,11 +137,19 @@ def eval(final_emb, labels, splits, random_state=42, clf=['mlp','sgd','lr','svm'
 def main(args):
     
     emb_dicts = []
-    for f in os.listdir(args.emb_dir)
-        embs = np.loadtxt(os.path.join(args.emb_dir, f))
+    for f in os.listdir(args.emb_dir):
+        # embs = np.loadtxt(os.path.join(args.emb_dir, f))
+        n_err = 0
         emb_dict = {}
-        for i in range(embs.shape[0]):
-            emb_dict[int(embs[i][0])] = embs[i][1:]
+        # for i in range(embs.shape[0]):
+        #     emb_dict[int(embs[i][0])] = embs[i][1:]
+        for line in tqdm(open(os.path.join(args.emb_dir, f))):
+            node, emb = line.strip().split(" ",1)
+            try:
+                emb_dict[int(node)] = np.array(list(map(float, emb.split())))
+            except:
+                n_err +=1
+        print(n_err)
         emb_dicts.append(emb_dict)
 
     labels = np.loadtxt(args.labels).astype(int)
