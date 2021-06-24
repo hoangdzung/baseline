@@ -9,15 +9,12 @@ import time
 parser = argparse.ArgumentParser()
 parser.add_argument('--edge_list')
 parser.add_argument('--dim', type=int, default=128)
-parser.add_argument('--walk_length', type=int, default=4)
-parser.add_argument('--context_size', type=int, default=2)
-parser.add_argument('--walks_per_node', type=int, default=2)
 
 parser.add_argument('--seed', type=int, default=0)
 parser.add_argument('--max_iter', type=int, default=1)
 parser.add_argument('--num_workers', type=int, default=1)
-parser.add_argument('--prob', type=float, default=0.5)
-
+parser.add_argument('--prob', type=float, default=1.0)
+parser.add_argument('--out')
 args = parser.parse_args()
 
 walks = []
@@ -33,6 +30,7 @@ for line in tqdm(open(args.edge_list), desc='Read part graph'):
 stime = time.time()
 model = Word2Vec(sentences=walks, size=args.dim, window=args.context_size, min_count=0, workers=args.num_workers, iter=args.max_iter)
 print("Gensim take ", time.time()-stime)
+model.save(args.out)
 
 # stime = time.time()
 # graph = Graph(full_walks, directed=False, weighted=False)
